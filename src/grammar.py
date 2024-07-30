@@ -29,6 +29,6 @@ def get_mask(nonterminal, grammar, as_variable=False):
 
 if __name__ == '__main__':
     # Usage:
-    GCFG = nltk.CFG.fromstring(grammar)
+    GCFG = CFG.fromstring(grammar)
 
-    print(get_mask(T))
+    print(get_mask(S, GCFG))

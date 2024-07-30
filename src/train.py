@@ -1,10 +1,9 @@
+import os
 import csv
-
 import numpy as np
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
-
 from model import GrammarVAE
 from util import Timer, AnnealKL, load_data
 
@@ -18,12 +17,12 @@ OUTPUT_SIZE = 12
 LR = 1e-2
 CLIP = 5.
 PRINT_EVERY = 100
-EPOCHS = 3
+EPOCHS = 1
+
 
 def batch_iter(data, batch_size):
     """A simple iterator over batches of data"""
     n = data.shape[0]
-    i_prev = 0
     for i in range(0, n, batch_size):
         x = data[i:i+batch_size].transpose(-2, -1) # shape [batch, 12, 15]
         x = Variable(x)
@@ -33,13 +32,19 @@ def batch_iter(data, batch_size):
 def accuracy(logits, y):
     _, y_ = logits.max(-1)
     a = (y == y_).float().mean()
-    return 100 * a.data[0]
+    return 100 * a.item()
 
 def save():
-    torch.save(model, 'checkpoints/model.pt')
+    parent_path = os.path.dirname(os.path.dirname(__file__))
+    os.makedirs(f'{parent_path}/checkpoints', exist_ok=True)
 
-def write_csv(d, path):
-    with open(path, 'w') as f:
+    torch.save(model, f'{parent_path}/checkpoints/model.pt')
+
+def write_csv(d):
+    parent_path = os.path.dirname(os.path.dirname(__file__))
+    os.makedirs(f'{parent_path}/log', exist_ok=True)
+
+    with open(f'{parent_path}/log/log.csv', 'w') as f:
         writer = csv.writer(f)
         writer.writerow(d.keys())
         writer.writerows(zip(*d.values()))
@@ -65,9 +70,9 @@ def train():
         torch.nn.utils.clip_grad_norm(model.parameters(), CLIP)
         optimizer.step()
 
-        log['loss'].append(loss.data.numpy()[0])
-        log['kl'].append(kl.data.numpy()[0])
-        log['elbo'].append(elbo.data.numpy()[0])
+        log['loss'].append(loss.item())
+        log['kl'].append(kl.item())
+        log['elbo'].append(elbo.item())
         log['acc'].append(accuracy(logits, y))
 
         # Logging info
@@ -83,17 +88,16 @@ def train():
                     BATCH_SIZE*PRINT_EVERY / timer.elapsed()
                     )
                 )
-            write_csv(log, 'log/log.csv')
+            write_csv(log)
 
 
 if __name__ == '__main__':
     torch.manual_seed(42)
 
     # Load data
-    data_path = '../data/eq2_grammar_dataset.h5'
+    data_path = '/Users/luis/Desktop/Cranmer 2024/Workplace/smallMutations/grammar-vae/data/equation2_15_dataset_parsed.h5'
     data = load_data(data_path)
-    # Turn it into a float32 PyTorch Tensor
-    data = torch.from_numpy(data).float()
+    data = torch.from_numpy(data).float()  # Turn it into a float32 PyTorch Tensor
 
     # Create model
     model = GrammarVAE(ENCODER_HIDDEN, Z_SIZE, DECODER_HIDDEN, OUTPUT_SIZE, RNN_TYPE)
@@ -117,4 +121,4 @@ if __name__ == '__main__':
         print('-' * 69)
 
     save()
-    write_csv(log, 'log/log.csv')
+    write_csv(log)

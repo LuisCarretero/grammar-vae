@@ -14,8 +14,16 @@ class GrammarVAE(nn.Module):
     """Grammar Variational Autoencoder"""
     def __init__(self, hidden_encoder_size, z_dim, hidden_decoder_size, output_size, rnn_type):
         super(GrammarVAE, self).__init__()
-        self.encoder = Encoder(hidden_encoder_size, z_dim)
-        self.decoder = Decoder(z_dim, hidden_decoder_size, output_size, rnn_type)
+        self.device = (
+            "cuda" if torch.cuda.is_available()
+            else "mps" if torch.backends.mps.is_available()
+            else "cpu"
+        )
+        self.device = 'cpu'  # TODO: Fix this. Some parts still in CPU even if mps active
+
+        self.encoder = Encoder(hidden_encoder_size, z_dim).to(self.device)
+        self.decoder = Decoder(z_dim, hidden_decoder_size, output_size, rnn_type).to(self.device)
+        self.to(self.device)
 
     def sample(self, mu, sigma):
         """Reparametrized sample from a N(mu, sigma) distribution"""
@@ -35,9 +43,16 @@ class GrammarVAE(nn.Module):
         return logits
 
     def generate(self, z, sample=False, max_length=15):
-        """Generate a valid expression from z using the decoder"""
+        """Generate a valid expression from z using the decoder and grammar to create a set of rules that can 
+        be parsed into an expression tree."""
         stack = Stack(grammar=GCFG, start_symbol=S)
-        logits = self.decoder(z, max_length=max_length).squeeze()
+
+        # Decoder works with general batch size. Only allow batch size 1 for now
+        logits = self.decoder(z, max_length=max_length)
+        assert len(logits.shape) == 3  # I.e. batch size as 3rd dimension
+        logits = logits[0, ...].squeeze()  # Only considering 1st batch
+        # print(f'{logits.shape = }')  # Should be (max_length, rule count)
+
         rules = []
         t = 0
         while stack.nonempty:
@@ -45,14 +60,15 @@ class GrammarVAE(nn.Module):
             mask = get_mask(alpha, stack.grammar, as_variable=True)
             probs = mask * logits[t].exp()
             probs = probs / probs.sum()
-            print(probs)
+            # print(probs)
             if sample:
                 m = Categorical(probs)
                 i = m.sample()
             else:
                 _, i = probs.max(-1) # argmax
             # convert PyTorch Variable to regular integer
-            i = i.data.numpy()[0]
+            # print(f'Chose rule {i.item()}')
+            i = i.item()
             # select rule i
             rule = stack.grammar.productions()[i]
             rules.append(rule)

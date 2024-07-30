@@ -33,7 +33,12 @@ class Encoder(nn.Module):
         self.softplus = nn.Softplus()
 
     def forward(self, x):
-        """Encode x into a mean and variance of a Normal"""
+        """
+        Encode x into a mean and variance of a Normal.
+        
+        Takes a one-hot encoded input of shape [batch, 12, 15] and returns
+        a mean and variance of a Normal distribution of shape [batch, 2].
+        """
         h = self.conv1(x)
         h = self.relu(h)
         h = self.conv2(h)

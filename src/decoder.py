@@ -37,8 +37,17 @@ class Decoder(nn.Module):
 
         # The input to the rnn is the same for each timestep: it is z.
         x = x.unsqueeze(1).expand(-1, max_length, -1)
-        hx = Variable(torch.zeros(x.size(0), self.hidden_size))
-        hx = (hx, hx) if self.rnn_type == 'lstm' else hx
+
+        batch_size = z.size(0)
+        if self.rnn_type == 'lstm':
+            h0 = torch.zeros(1, batch_size, self.hidden_size).to(z.device)
+            c0 = torch.zeros(1, batch_size, self.hidden_size).to(z.device)
+            hx = (h0, c0)
+        else:  # for GRU
+            hx = torch.zeros(1, batch_size, self.hidden_size).to(z.device)
+
+        # hx = Variable(torch.zeros(x.size(0), self.hidden_size))
+        # hx = (hx, hx) if self.rnn_type == 'lstm' else hx
 
         x, _ = self.rnn(x, hx)
 

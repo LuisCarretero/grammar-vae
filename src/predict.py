@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import numpy as np
+import os
 import torch
 from torch.autograd import Variable
 
@@ -13,12 +13,12 @@ from train import ENCODER_HIDDEN, Z_SIZE, DECODER_HIDDEN, OUTPUT_SIZE
 torch.manual_seed(10)
 
 # Load saved model
-model_path = 'checkpoints/model.pt'
+model_path = f'{os.path.dirname(os.path.dirname(__file__))}/checkpoints/model.pt'
 model = torch.load(model_path)
 # model = GrammarVAE(ENCODER_HIDDEN, Z_SIZE, DECODER_HIDDEN, OUTPUT_SIZE)
 
 # Load data
-data_path = '../data/eq2_grammar_dataset.h5'
+data_path = f'{os.path.dirname(os.path.dirname(__file__))}/data/equation2_15_dataset_parsed.h5'
 data = load_data(data_path)
 
 def data2input(x):

@@ -27,16 +27,30 @@ class AnnealKL:
 
 def load_data(data_path):
 	"""Returns the h5 dataset as numpy array"""
-	f = h5py.File(data_path, 'r')
-	return f['data'][:]
+
+	with h5py.File(data_path, 'r') as f:
+		data = f['data'][:]
+	return data
+
+# def make_nltk_tree(derivation):
+# 	"""return a nltk Tree object based on the derivation (list or tuple of Rules)."""
+# 	d = defaultdict(None, ((r.lhs(), r.rhs()) for r in derivation))
+# 	def make_tree(lhs, rhs):
+# 		return Tree(lhs, (child if child not in d else make_tree(child) for child in d[lhs]))
+# 		return Tree(lhs,
+# 				(child if not isinstance(child, Nonterminal) else make_tree(child)
+# 					for child in rhs))
+# 
+# 	return make_tree(r.lhs(), r.rhs())
+
 
 def make_nltk_tree(derivation):
-	"""return a nltk Tree object based on the derivation (list or tuple of Rules)."""
-	d = defaultdict(None, ((r.lhs(), r.rhs()) for r in derrivation))
-	def make_tree(lhs, rhs):
-		return Tree(lhs, (child if child not in d else make_tree(child) for child in d[lhs]))
-		return Tree(lhs,
-				(child if not isinstance(child, Nonterminal) else make_tree(child)
-					for child in rhs))
+    """Return a nltk Tree object based on the derivation (list or tuple of Rules)."""
+    d = dict((r.lhs(), r.rhs()) for r in derivation)
+    
+    def make_tree(lhs):
+        if lhs not in d:
+            return lhs
+        return Tree(lhs, [make_tree(child) for child in d[lhs]])
 
-	return make_tree(r.lhs(), r.rhs())
+    return make_tree(derivation[0].lhs())
