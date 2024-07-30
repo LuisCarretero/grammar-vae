@@ -12,14 +12,16 @@ from grammar import GCFG, S, T, get_mask
 
 class GrammarVAE(nn.Module):
     """Grammar Variational Autoencoder"""
-    def __init__(self, hidden_encoder_size, z_dim, hidden_decoder_size, output_size, rnn_type):
+    def __init__(self, hidden_encoder_size, z_dim, hidden_decoder_size, output_size, rnn_type, device=None):
         super(GrammarVAE, self).__init__()
-        self.device = (
-            "cuda" if torch.cuda.is_available()
+        if device is None:
+            self.device = (
+                "cuda" if torch.cuda.is_available()
             else "mps" if torch.backends.mps.is_available()
-            else "cpu"
-        )
-        self.device = 'cpu'  # TODO: Fix this. Some parts still in CPU even if mps active
+            else "cpu") 
+            print(f'Using device: {self.device}')
+        else:
+            self.device = device
 
         self.encoder = Encoder(hidden_encoder_size, z_dim).to(self.device)
         self.decoder = Decoder(z_dim, hidden_decoder_size, output_size, rnn_type).to(self.device)
@@ -27,7 +29,7 @@ class GrammarVAE(nn.Module):
 
     def sample(self, mu, sigma):
         """Reparametrized sample from a N(mu, sigma) distribution"""
-        normal = Normal(torch.zeros(mu.shape), torch.ones(sigma.shape))
+        normal = Normal(torch.zeros(mu.shape).to(self.device), torch.ones(sigma.shape).to(self.device))
         eps = Variable(normal.sample())
         z = mu + eps*torch.sqrt(sigma)
         return z

@@ -44,13 +44,29 @@ def load_data(data_path):
 # 	return make_tree(r.lhs(), r.rhs())
 
 
-def make_nltk_tree(derivation):
-    """Return a nltk Tree object based on the derivation (list or tuple of Rules)."""
-    d = dict((r.lhs(), r.rhs()) for r in derivation)
+# def make_nltk_tree(derivation):
+#     """Return a nltk Tree object based on the derivation (list or tuple of Rules)."""
+#     d = dict((r.lhs(), r.rhs()) for r in derivation)
     
-    def make_tree(lhs):
-        if lhs not in d:
-            return lhs
-        return Tree(lhs, [make_tree(child) for child in d[lhs]])
+#     def make_tree(lhs):
+#         if lhs not in d:
+#             return lhs
+#         return Tree(lhs, [make_tree(child) for child in d[lhs]])
 
-    return make_tree(derivation[0].lhs())
+#     return make_tree(derivation[0].lhs())
+
+def prods_to_eq(prods, verbose=False):
+    seq = [prods[0].lhs()]
+    for prod in prods:
+        if str(prod.lhs()) == 'Nothing':
+            break
+        for ix, s in enumerate(seq):
+            if s == prod.lhs():
+                seq = seq[:ix] + list(prod.rhs()) + seq[ix+1:]
+                break
+    try:
+        return ''.join(seq)
+    except TypeError:
+        if verbose:
+            print(f'Nonterminal found. {seq = }')
+        return ''

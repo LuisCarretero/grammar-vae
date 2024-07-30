@@ -17,7 +17,7 @@ OUTPUT_SIZE = 12
 LR = 1e-2
 CLIP = 5.
 PRINT_EVERY = 100
-EPOCHS = 1
+EPOCHS = 5
 
 
 def batch_iter(data, batch_size):
@@ -35,16 +35,16 @@ def accuracy(logits, y):
     return 100 * a.item()
 
 def save():
-    parent_path = os.path.dirname(os.path.dirname(__file__))
-    os.makedirs(f'{parent_path}/checkpoints', exist_ok=True)
+    checkpoint_path = os.path.abspath('./checkpoints')
+    os.makedirs(checkpoint_path, exist_ok=True)
 
-    torch.save(model, f'{parent_path}/checkpoints/model.pt')
+    torch.save(model, f'{checkpoint_path}/model5epoch.pt')
 
 def write_csv(d):
-    parent_path = os.path.dirname(os.path.dirname(__file__))
-    os.makedirs(f'{parent_path}/log', exist_ok=True)
+    log_path = os.path.abspath('./log')
+    os.makedirs(log_path, exist_ok=True)
 
-    with open(f'{parent_path}/log/log.csv', 'w') as f:
+    with open(f'{log_path}/log.csv', 'w') as f:
         writer = csv.writer(f)
         writer.writerow(d.keys())
         writer.writerows(zip(*d.values()))
@@ -94,15 +94,15 @@ def train():
 if __name__ == '__main__':
     torch.manual_seed(42)
 
-    # Load data
-    data_path = '/Users/luis/Desktop/Cranmer 2024/Workplace/smallMutations/grammar-vae/data/equation2_15_dataset_parsed.h5'
-    data = load_data(data_path)
-    data = torch.from_numpy(data).float()  # Turn it into a float32 PyTorch Tensor
-
     # Create model
-    model = GrammarVAE(ENCODER_HIDDEN, Z_SIZE, DECODER_HIDDEN, OUTPUT_SIZE, RNN_TYPE)
+    model = GrammarVAE(ENCODER_HIDDEN, Z_SIZE, DECODER_HIDDEN, OUTPUT_SIZE, RNN_TYPE, device='cpu')
     criterion = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=LR)
+
+        # Load data
+    data_path = os.path.abspath('./data/equation2_15_dataset_parsed.h5')
+    data = load_data(data_path)
+    data = torch.from_numpy(data).float().to(model.device)  # Turn it into a float32 PyTorch Tensor
 
     timer = Timer()
     log = {'loss': [], 'kl': [], 'elbo': [], 'acc': []}

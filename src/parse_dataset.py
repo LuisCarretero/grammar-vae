@@ -46,7 +46,7 @@ def onehot_encode(eqs):
 
 if __name__ == '__main__':
     datapath = r'/Users/luis/Desktop/Cranmer 2024/Workplace/smallMutations/grammar-vae/data/equation2_15_dataset.txt'
-    parsed_path = r'/Users/luis/Desktop/Cranmer 2024/Workplace/smallMutations/grammar-vae/data/equation2_15_dataset_parsed.npy'
+    parsed_path = r'/Users/luis/Desktop/Cranmer 2024/Workplace/smallMutations/grammar-vae/data/equation2_15_dataset_parsed.h5'
 
     with open(datapath, 'r') as f:
         eqs = f.readlines()
@@ -54,10 +54,10 @@ if __name__ == '__main__':
 
     one_hot = onehot_encode(eqs)
 
-    print('Saving to h5...')
     if os.path.exists(parsed_path):
         print('File already exists. Exiting.')
         exit()
+    print('Saving to h5...')
     with h5py.File(parsed_path, 'w') as f:
         f.create_dataset('data', data=one_hot)
 

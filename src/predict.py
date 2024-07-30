@@ -13,12 +13,12 @@ from train import ENCODER_HIDDEN, Z_SIZE, DECODER_HIDDEN, OUTPUT_SIZE
 torch.manual_seed(10)
 
 # Load saved model
-model_path = f'{os.path.dirname(os.path.dirname(__file__))}/checkpoints/model.pt'
+model_path = os.path.abspath('./checkpoints/model.pt')
 model = torch.load(model_path)
 # model = GrammarVAE(ENCODER_HIDDEN, Z_SIZE, DECODER_HIDDEN, OUTPUT_SIZE)
 
 # Load data
-data_path = f'{os.path.dirname(os.path.dirname(__file__))}/data/equation2_15_dataset_parsed.h5'
+data_path = os.path.abspath('./data/equation2_15_dataset_parsed.h5')
 data = load_data(data_path)
 
 def data2input(x):
